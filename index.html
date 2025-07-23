@@ -3,134 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NZXT Kraken Twitch Display</title>
+    <title>NZXT Twitch Stream Monitor</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif;
-            background: #0f0f23;
-            color: white;
+            font-family: Arial, sans-serif;
+            background: transparent;
             overflow: hidden;
         }
 
         .container {
-            width: 100%;
+            width: 100vw;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        .kraken-display {
-            width: 220px;
-            height: 220px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 50%;
             position: relative;
-            margin: 10px auto;
         }
 
-        .elite-display {
-            width: 600px;
-            height: 600px;
-        }
-
-        .config-display {
+        /* Hide the display by default - let NZXT show CPU temp */
+        .stream-display {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 800px;
-            height: auto;
-            border-radius: 10px;
-            padding: 20px;
-            background: #1a1a3a;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            background: transparent;
         }
 
-        .live-status {
-            background: radial-gradient(circle, #9146ff, #6441a4);
-            animation: pulse 2s ease-in-out infinite alternate;
-        }
-
-        .offline-status {
-            background: radial-gradient(circle, #2d2d44, #1a1a2e);
-        }
-
-        .unknown-status {
-            background: radial-gradient(circle, #ff6b35, #d45519);
-        }
-
-        .live-indicator {
-            background: #ff0000;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            animation: blink 1s ease-in-out infinite alternate;
-        }
-
-        .offline-indicator {
-            background: #666;
-            color: #ccc;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .unknown-indicator {
-            background: #ff6b35;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .streamer-name {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .stream-info {
-            font-size: 12px;
-            opacity: 0.8;
-            margin: 5px 0;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .config-form {
+        .stream-display.active {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+        }
+
+        .streamer-gif {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            overflow: hidden;
+            border: none;
+            box-shadow: none;
+        }
+
+        .streamer-gif img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .config-panel {
+            width: 100%;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #1a1a2e;
+            border-radius: 15px;
+            color: white;
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
-            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
             color: #9146ff;
+            font-weight: bold;
         }
 
         .form-group input {
-            padding: 10px;
+            width: 100%;
+            padding: 12px;
             border: 2px solid #444;
-            border-radius: 5px;
+            border-radius: 8px;
             background: #2d2d44;
             color: white;
             font-size: 16px;
+            box-sizing: border-box;
         }
 
         .form-group input:focus {
@@ -138,43 +88,41 @@
             border-color: #9146ff;
         }
 
-        .save-btn {
+        .btn {
             background: #9146ff;
             color: white;
-            padding: 12px 24px;
+            padding: 12px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
 
-        .save-btn:hover {
+        .btn:hover {
             background: #7c3aed;
         }
 
-        .status-message {
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
+        .btn.secondary {
+            background: #666;
+        }
+
+        .btn.secondary:hover {
+            background: #777;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
             font-weight: bold;
         }
 
-        .success {
-            background: #22c55e;
-            color: white;
-        }
-
-        .error {
-            background: #ef4444;
-            color: white;
-        }
-
-        .warning {
-            background: #f59e0b;
-            color: white;
-        }
+        .status.success { background: #22c55e; }
+        .status.error { background: #ef4444; }
+        .status.info { background: #3b82f6; }
 
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -185,283 +133,229 @@
             0% { opacity: 1; }
             100% { opacity: 0.7; }
         }
-
-        .loading {
-            opacity: 0.6;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="krakenDisplay" class="kraken-display">
-            <div class="loading">Loading...</div>
+        <!-- Stream Display (only shows when live) -->
+        <div id="streamDisplay" class="stream-display">
+            <div class="streamer-gif">
+                <img id="streamerGif" src="" alt="Streamer">
+            </div>
+        </div>
+
+        <!-- Configuration Panel (only in config mode) -->
+        <div id="configPanel" class="config-panel" style="display: none;">
+            <h1 style="color: #9146ff; text-align: center;">🎮 NZXT Twitch Monitor Setup</h1>
+            
+            <div class="form-group">
+                <label>Twitch Client ID:</label>
+                <input type="text" id="clientId" placeholder="Get from dev.twitch.tv/console/apps">
+                <small style="color: #888;">Required for checking stream status</small>
+            </div>
+
+            <div class="form-group">
+                <label>Streamer Username:</label>
+                <input type="text" id="streamerUsername" value="kato_junichi0817">
+            </div>
+
+            <div class="form-group">
+                <label>Streamer GIF URL:</label>
+                <input type="text" id="gifUrl" placeholder="Direct URL to GIF file">
+                <small style="color: #888;">Upload GIF to imgur.com or use direct URL</small>
+            </div>
+
+            <button class="btn" onclick="saveConfig()">💾 Save Configuration</button>
+            <button class="btn secondary" onclick="testStream()">🔄 Test Stream Check</button>
+            <button class="btn secondary" onclick="testDisplay()">👁️ Preview Display</button>
+
+            <div id="statusMessage"></div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #2d2d44; border-radius: 10px;">
+                <h3 style="color: #9146ff;">📋 Quick Setup:</h3>
+                <ol style="line-height: 1.8;">
+                    <li>Create Twitch app at <a href="https://dev.twitch.tv/console/apps" target="_blank" style="color: #9146ff;">dev.twitch.tv/console/apps</a></li>
+                    <li>Copy your Client ID and paste above</li>
+                    <li>Upload your GIF to <a href="https://imgur.com" target="_blank" style="color: #9146ff;">imgur.com</a> and get direct link</li>
+                    <li>Save configuration</li>
+                    <li>Done! Display will show GIF only when streamer goes live</li>
+                </ol>
+            </div>
         </div>
     </div>
 
     <script>
-        class TwitchKrakenDisplay {
+        class TwitchMonitor {
             constructor() {
-                this.streamerName = '';
-                this.isKrakenView = false;
-                this.displayElement = document.getElementById('krakenDisplay');
-                this.refreshInterval = null;
-                this.lastStreamCheck = null;
+                this.isKrakenView = new URLSearchParams(window.location.search).get('kraken') === '1';
+                this.config = this.loadConfig();
+                this.checkInterval = null;
                 
                 this.init();
             }
 
             init() {
-                // Check if this is the Kraken display or config view
-                const urlParams = new URLSearchParams(window.location.search);
-                this.isKrakenView = urlParams.get('kraken') === '1';
-                
-                // Get NZXT display dimensions if available
-                if (window.nzxt && window.nzxt.v1) {
-                    const { width, height } = window.nzxt.v1;
-                    if (width === 640 && height === 640) {
-                        this.displayElement.classList.add('elite-display');
-                    }
-                }
-
-                // Load saved configuration
-                this.loadConfig();
-
                 if (this.isKrakenView) {
-                    this.setupKrakenDisplay();
+                    // This is the Kraken display
+                    document.getElementById('configPanel').style.display = 'none';
+                    this.startMonitoring();
                 } else {
-                    this.setupConfigDisplay();
+                    // This is the configuration page
+                    document.getElementById('configPanel').style.display = 'block';
+                    this.setupConfigPanel();
                 }
             }
 
             loadConfig() {
-                this.streamerName = localStorage.getItem('twitch_streamer_name') || '';
-            }
-
-            saveConfig() {
-                localStorage.setItem('twitch_streamer_name', this.streamerName);
-            }
-
-            setupKrakenDisplay() {
-                if (!this.streamerName) {
-                    // Show minimal error that won't interfere with normal display
-                    this.displayElement.innerHTML = `
-                        <div style="position: absolute; top: 5px; right: 5px; font-size: 8px; opacity: 0.3;">
-                            Config needed
-                        </div>
-                    `;
-                    // Let NZXT CAM show normal temperature display
-                    this.displayElement.style.display = 'none';
-                    return;
-                }
-
-                this.startStreamMonitoring();
-            }
-
-            setupConfigDisplay() {
-                this.displayElement.className = 'config-display';
-                this.displayElement.innerHTML = `
-                    <h2 style="color: #9146ff; margin-bottom: 20px;">🎮 NZXT Kraken Twitch Display Setup</h2>
-                    
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label for="streamerName">Streamer Username:</label>
-                            <input type="text" id="streamerName" placeholder="e.g., ninja, pokimane" value="${this.streamerName}">
-                            <small style="color: #888;">The Twitch username (from the URL: twitch.tv/username)</small>
-                        </div>
-
-                        <button class="save-btn" onclick="display.saveConfiguration()">💾 Save Configuration</button>
-                        
-                        <div id="statusMessage"></div>
-                        
-                        <div style="margin-top: 20px; padding: 15px; background: #2d2d44; border-radius: 5px;">
-                            <h3 style="color: #9146ff;">📋 Simplified Setup:</h3>
-                            <ol style="line-height: 1.6;">
-                                <li>Find your streamer's Twitch channel</li>
-                                <li>Copy the username from the URL (twitch.tv/<strong>username</strong>)</li>
-                                <li>Enter it above and save</li>
-                                <li>The display will check for recent activity every 30 seconds</li>
-                            </ol>
-                            
-                            <div style="margin-top: 15px; padding: 10px; background: #1a1a3a; border-radius: 5px; border-left: 4px solid #f59e0b;">
-                                <strong>📍 Note:</strong> This version uses activity-based detection instead of real-time API calls to avoid connection issues. It checks if the streamer has been active recently.
-                            </div>
-                        </div>
-
-                        <div id="testArea" style="margin-top: 20px;"></div>
-                    </div>
-                `;
-            }
-
-            async saveConfiguration() {
-                const streamerNameInput = document.getElementById('streamerName');
-                const statusDiv = document.getElementById('statusMessage');
-
-                this.streamerName = streamerNameInput.value.trim().toLowerCase();
-
-                if (!this.streamerName) {
-                    statusDiv.innerHTML = '<div class="status-message error">❌ Please enter a streamer username</div>';
-                    return;
-                }
-
-                // Just save the configuration - skip verification due to CORS issues
-                statusDiv.innerHTML = '<div class="status-message">💾 Saving configuration...</div>';
-
-                this.saveConfig();
-                statusDiv.innerHTML = '<div class="status-message success">✅ Configuration saved! The display will monitor activity for this streamer.</div>';
-                this.showTestArea();
-            }
-
-            async testStreamerExists() {
-                try {
-                    // Try to access the streamer's page indirectly
-                    const response = await fetch(`https://www.twitch.tv/${this.streamerName}`, {
-                        method: 'HEAD',
-                        mode: 'no-cors'
-                    });
-                    return { exists: true };
-                } catch (error) {
-                    return { exists: false };
-                }
-            }
-
-            async showTestArea() {
-                const testArea = document.getElementById('testArea');
-                testArea.innerHTML = `
-                    <div style="padding: 15px; background: #1a1a3a; border-radius: 5px; border: 2px solid #9146ff;">
-                        <h4 style="color: #9146ff; margin-top: 0;">🎯 Activity Monitor</h4>
-                        <div id="activityTest">Checking ${this.streamerName}'s recent activity...</div>
-                        <button onclick="display.refreshTest()" style="margin-top: 10px; padding: 8px 16px; background: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">🔄 Refresh</button>
-                    </div>
-                `;
-                
-                this.refreshTest();
-            }
-
-            async refreshTest() {
-                const testDiv = document.getElementById('activityTest');
-                if (!testDiv) return;
-
-                testDiv.innerHTML = 'Checking activity...';
-                
-                try {
-                    const activityData = await this.checkRecentActivity();
-                    if (activityData.isActive) {
-                        testDiv.innerHTML = `
-                            <div style="color: #22c55e;">✅ ${this.streamerName} appears to be active!</div>
-                            <div style="font-size: 12px; margin-top: 5px;">
-                                Last detected activity suggests they may be streaming
-                            </div>
-                        `;
-                    } else {
-                        testDiv.innerHTML = `
-                            <div style="color: #666;">⏸️ ${this.streamerName} appears inactive</div>
-                            <div style="font-size: 12px; margin-top: 5px;">
-                                No recent activity detected
-                            </div>
-                        `;
-                    }
-                } catch (error) {
-                    testDiv.innerHTML = `<div style="color: #f59e0b;">⚠️ Activity check unavailable - will monitor anyway</div>`;
-                }
-            }
-
-            async startStreamMonitoring() {
-                // Initial check
-                await this.updateDisplay();
-                
-                // Check every 30 seconds
-                this.refreshInterval = setInterval(() => {
-                    this.updateDisplay();
-                }, 30000);
-            }
-
-            async updateDisplay() {
-                try {
-                    const activityData = await this.checkRecentActivity();
-                    this.renderDisplay(activityData);
-                } catch (error) {
-                    console.error('Failed to update display:', error);
-                    this.renderError();
-                }
-            }
-
-            async checkRecentActivity() {
-                // More conservative activity detection - should show INACTIVE most of the time
-                // Only show LIVE during likely streaming hours with lower probability
-                
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
-                
-                // Japanese streamer likely streams in JST evening (which is morning/afternoon in other timezones)
-                // Let's be more conservative - only consider likely during specific hours
-                const isWeekend = currentDay === 0 || currentDay === 6;
-                const isLikelyStreamingTime = (currentHour >= 20 && currentHour <= 23) || (isWeekend && currentHour >= 14 && currentHour <= 17);
-                
-                // Much more conservative - only 20% chance during likely hours, 5% otherwise
-                const randomFactor = Math.random();
-                const threshold = isLikelyStreamingTime ? 0.8 : 0.95; // Higher threshold = less likely to show LIVE
-                
-                const isActive = randomFactor > threshold;
-                
                 return {
-                    isActive,
-                    confidence: isActive ? 'Medium' : 'High',
-                    lastChecked: now.toLocaleTimeString(),
-                    debugInfo: `Hour: ${currentHour}, Weekend: ${isWeekend}, Threshold: ${threshold}, Random: ${randomFactor.toFixed(2)}`
+                    clientId: localStorage.getItem('twitch_client_id') || '',
+                    streamerUsername: localStorage.getItem('streamer_username') || 'kato_junichi0817',
+                    gifUrl: localStorage.getItem('gif_url') || ''
                 };
             }
 
-            renderDisplay(activityData) {
-                if (!activityData.isActive) {
-                    // When streamer is NOT live, hide the web integration 
-                    // so NZXT CAM shows the default temperature display
-                    this.displayElement.style.display = 'none';
+            saveConfig() {
+                this.config.clientId = document.getElementById('clientId').value.trim();
+                this.config.streamerUsername = document.getElementById('streamerUsername').value.trim();
+                this.config.gifUrl = document.getElementById('gifUrl').value.trim();
+
+                localStorage.setItem('twitch_client_id', this.config.clientId);
+                localStorage.setItem('streamer_username', this.config.streamerUsername);
+                localStorage.setItem('gif_url', this.config.gifUrl);
+            }
+
+            setupConfigPanel() {
+                document.getElementById('clientId').value = this.config.clientId;
+                document.getElementById('streamerUsername').value = this.config.streamerUsername;
+                document.getElementById('gifUrl').value = this.config.gifUrl;
+            }
+
+            async startMonitoring() {
+                if (!this.config.clientId || !this.config.streamerUsername) {
+                    console.log('Configuration incomplete - staying hidden');
                     return;
                 }
 
-                // When streamer IS live, show the custom display
-                this.displayElement.style.display = 'flex';
-                
-                const statusClass = 'live-status';
-                const indicatorClass = 'live-indicator';
-                const indicatorText = '🔴 LIVE';
-
-                this.displayElement.className = `kraken-display ${statusClass}`;
-                
-                if (this.displayElement.classList.contains('elite-display')) {
-                    this.displayElement.classList.add('elite-display');
+                // Set up the GIF
+                if (this.config.gifUrl) {
+                    document.getElementById('streamerGif').src = this.config.gifUrl;
                 }
 
-                // Show streamer's face GIF when live
-                let content = `
-                    <div class="${indicatorClass}" style="font-size: 12px; padding: 6px 12px;">${indicatorText}</div>
-                    <div class="streamer-avatar" style="width: 120px; height: 120px; border-radius: 15px; overflow: hidden; margin: 8px 0; border: 2px solid #9146ff; background: #000;">
-                        <img src="https://media1.tenor.com/m/aOq8DJCBojwAAAAd/smile-youtuber-junichi-kato.gif" 
-                             style="width: 100%; height: 100%; object-fit: cover;" 
-                             alt="Kato Junichi GIF"
-                             onerror="this.src='https://i.imgur.com/placeholder.gif'; console.log('GIF failed to load');">
-                    </div>
-                    <div class="streamer-name" style="font-size: 14px; font-weight: bold;">${this.streamerName}</div>
-                    <div class="stream-info" style="font-size: 10px; margin-top: 4px;">Now Streaming!</div>
-                `;
-
-                this.displayElement.innerHTML = content;
+                // Check immediately, then every 30 seconds
+                this.checkStreamStatus();
+                this.checkInterval = setInterval(() => {
+                    this.checkStreamStatus();
+                }, 30000);
             }
 
-            renderError() {
-                this.displayElement.innerHTML = `
-                    <div style="text-align: center;">
-                        <div style="font-size: 16px; margin-bottom: 10px;">⚠️</div>
-                        <div style="font-size: 12px;">Monitor Error</div>
-                        <div style="font-size: 10px; opacity: 0.7;">Will retry shortly</div>
-                    </div>
-                `;
+            async checkStreamStatus() {
+                try {
+                    const isLive = await this.isStreamerLive();
+                    const display = document.getElementById('streamDisplay');
+                    
+                    if (isLive) {
+                        display.classList.add('active');
+                        console.log(`${this.config.streamerUsername} is LIVE - showing display`);
+                    } else {
+                        display.classList.remove('active');
+                        console.log(`${this.config.streamerUsername} is offline - hiding display`);
+                    }
+                } catch (error) {
+                    console.error('Error checking stream status:', error);
+                    // Hide display on error
+                    document.getElementById('streamDisplay').classList.remove('active');
+                }
+            }
+
+            async isStreamerLive() {
+                // Get OAuth token
+                const tokenResponse = await fetch(`https://id.twitch.tv/oauth2/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `client_id=${this.config.clientId}&client_secret=&grant_type=client_credentials`
+                });
+
+                if (!tokenResponse.ok) {
+                    throw new Error('Failed to get OAuth token');
+                }
+
+                const tokenData = await tokenResponse.json();
+
+                // Get user info
+                const userResponse = await fetch(`https://api.twitch.tv/helix/users?login=${this.config.streamerUsername}`, {
+                    headers: {
+                        'Client-ID': this.config.clientId,
+                        'Authorization': `Bearer ${tokenData.access_token}`
+                    }
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error('Failed to get user info');
+                }
+
+                const userData = await userResponse.json();
+                if (userData.data.length === 0) {
+                    throw new Error('User not found');
+                }
+
+                const userId = userData.data[0].id;
+
+                // Check if streaming
+                const streamResponse = await fetch(`https://api.twitch.tv/helix/streams?user_id=${userId}`, {
+                    headers: {
+                        'Client-ID': this.config.clientId,
+                        'Authorization': `Bearer ${tokenData.access_token}`
+                    }
+                });
+
+                if (!streamResponse.ok) {
+                    throw new Error('Failed to check stream status');
+                }
+
+                const streamData = await streamResponse.json();
+                return streamData.data.length > 0;
+            }
+
+            showStatus(message, type = 'info') {
+                const statusDiv = document.getElementById('statusMessage');
+                statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
             }
         }
 
-        // Initialize the display
-        const display = new TwitchKrakenDisplay();
+        // Global functions for buttons
+        function saveConfig() {
+            monitor.saveConfig();
+            monitor.showStatus('✅ Configuration saved!', 'success');
+        }
+
+        async function testStream() {
+            monitor.showStatus('🔄 Checking stream status...', 'info');
+            try {
+                const isLive = await monitor.isStreamerLive();
+                monitor.showStatus(
+                    isLive ? '✅ Streamer is LIVE!' : '⭕ Streamer is offline', 
+                    isLive ? 'success' : 'info'
+                );
+            } catch (error) {
+                monitor.showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testDisplay() {
+            const display = document.getElementById('streamDisplay');
+            display.classList.add('active');
+            monitor.showStatus('👁️ Showing preview - this is what appears when streamer goes live', 'info');
+            
+            setTimeout(() => {
+                display.classList.remove('active');
+                monitor.showStatus('Preview ended', 'info');
+            }, 5000);
+        }
+
+        // Initialize
+        const monitor = new TwitchMonitor();
     </script>
 </body>
 </html>
