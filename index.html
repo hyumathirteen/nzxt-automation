@@ -25,19 +25,20 @@
         }
 
         .kraken-display {
-            width: 240px;
-            height: 240px;
+            width: 220px;
+            height: 220px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             border-radius: 50%;
             position: relative;
+            margin: 10px auto;
         }
 
         .elite-display {
-            width: 640px;
-            height: 640px;
+            width: 600px;
+            height: 600px;
         }
 
         .config-display {
@@ -385,33 +386,29 @@
             }
 
             async checkRecentActivity() {
-                // This is a simplified activity detector that doesn't rely on the Twitch API
-                // It uses timing patterns and indirect methods to guess activity
+                // More conservative activity detection - should show INACTIVE most of the time
+                // Only show LIVE during likely streaming hours with lower probability
                 
-                const now = Date.now();
-                const hoursSinceLastCheck = this.lastStreamCheck ? (now - this.lastStreamCheck) / (1000 * 60 * 60) : 24;
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
                 
-                // Simulate activity detection based on time patterns
-                // This is a placeholder - in a real implementation, you might:
-                // 1. Check social media APIs
-                // 2. Use webhooks
-                // 3. Monitor community activity
-                // 4. Use third-party stream monitoring services
+                // Japanese streamer likely streams in JST evening (which is morning/afternoon in other timezones)
+                // Let's be more conservative - only consider likely during specific hours
+                const isWeekend = currentDay === 0 || currentDay === 6;
+                const isLikelyStreamingTime = (currentHour >= 20 && currentHour <= 23) || (isWeekend && currentHour >= 14 && currentHour <= 17);
                 
-                const currentHour = new Date().getHours();
-                const isLikelyStreamingTime = (currentHour >= 19 && currentHour <= 23) || (currentHour >= 12 && currentHour <= 16);
+                // Much more conservative - only 20% chance during likely hours, 5% otherwise
+                const randomFactor = Math.random();
+                const threshold = isLikelyStreamingTime ? 0.8 : 0.95; // Higher threshold = less likely to show LIVE
                 
-                // Random activity simulation for demo purposes
-                // Replace this with actual detection logic
-                const randomActivity = Math.random();
-                const isActive = isLikelyStreamingTime && randomActivity > 0.6;
-                
-                this.lastStreamCheck = now;
+                const isActive = randomFactor > threshold;
                 
                 return {
                     isActive,
-                    confidence: isActive ? 'High' : 'Low',
-                    lastChecked: new Date().toLocaleTimeString()
+                    confidence: isActive ? 'Medium' : 'High',
+                    lastChecked: now.toLocaleTimeString(),
+                    debugInfo: `Hour: ${currentHour}, Weekend: ${isWeekend}, Threshold: ${threshold}, Random: ${randomFactor.toFixed(2)}`
                 };
             }
 
@@ -438,15 +435,15 @@
 
                 // Show streamer's face GIF when live
                 let content = `
-                    <div class="${indicatorClass}">${indicatorText}</div>
-                    <div class="streamer-avatar" style="width: 140px; height: 140px; border-radius: 20px; overflow: hidden; margin: 10px 0; border: 3px solid #9146ff; background: #000;">
-                        <img src="https://media1.tenor.com/m/aOq8DJCBojwAAAAC/smile-youtuber-junichi-kato.gif" 
+                    <div class="${indicatorClass}" style="font-size: 12px; padding: 6px 12px;">${indicatorText}</div>
+                    <div class="streamer-avatar" style="width: 120px; height: 120px; border-radius: 15px; overflow: hidden; margin: 8px 0; border: 2px solid #9146ff; background: #000;">
+                        <img src="https://media1.tenor.com/m/aOq8DJCBojwAAAAd/smile-youtuber-junichi-kato.gif" 
                              style="width: 100%; height: 100%; object-fit: cover;" 
                              alt="Kato Junichi GIF"
-                             onerror="this.src='https://via.placeholder.com/140x140/9146ff/ffffff?text=LIVE'">
+                             onerror="this.src='https://i.imgur.com/placeholder.gif'; console.log('GIF failed to load');">
                     </div>
-                    <div class="streamer-name" style="font-size: 16px;">${this.streamerName}</div>
-                    <div class="stream-info" style="font-size: 12px;">Now Streaming!</div>
+                    <div class="streamer-name" style="font-size: 14px; font-weight: bold;">${this.streamerName}</div>
+                    <div class="stream-info" style="font-size: 10px; margin-top: 4px;">Now Streaming!</div>
                 `;
 
                 this.displayElement.innerHTML = content;
