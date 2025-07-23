@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/check-stream.js": {
-      "maxDuration": 10
-    }
-  }
-}
